@@ -11,10 +11,12 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Group root = new Group();
+        /*Group root = new Group();
         primaryStage.setTitle("Hello World");
         primaryStage.setScene(new Scene(root, 300, 275));
-        primaryStage.show();
+        primaryStage.show();*/
+        Controller controller = Controller.getInstance();
+        controller.showMainMenu(primaryStage);
     }
 
 
