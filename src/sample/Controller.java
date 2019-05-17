@@ -91,7 +91,8 @@ public class Controller {
             refresh.setOnMouseClicked(mouseEvent -> {
                 try {
                     dos.writeUTF("clients");
-                    fillTheClientsList(dis, name, listView);
+                    if (dis.available() > 0)
+                        fillTheClientsList(dis, name, listView);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -110,8 +111,9 @@ public class Controller {
             String st = dis.readUTF();
             ArrayList<String> clients = getArrayList(st);
             listView.getItems().removeAll();
+
             for (String client : clients) {
-                if (!client.equals(name))
+                if (!client.equals(name) && !listView.getItems().contains(client))
                     listView.getItems().add(client);
             }
         }
@@ -148,20 +150,42 @@ public class Controller {
             }
         });
         t.start();*/
+        //
+        Thread thread = new Thread(() -> {
+            while (true){
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Platform.runLater(() -> {
+                    try {
+                        if(dis.available() > 0){
+                            contactMessage.setText(dis.readUTF());
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+        //
         //TODO
         Button refresh = new Button("refresh");
         refresh.setOnMouseClicked(mouseEvent -> {
             try {
-                if(dis.available() > 0){
+                if (dis.available() > 0) {
                     contactMessage.setText(dis.readUTF());
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
-        refresh.relocate(200,10);
+        refresh.relocate(200, 10);
         //
-        addToStage(stage, scene, root, message, userName, contactNameLabel, contactMessage,refresh);
+        addToStage(stage, scene, root, message, userName, contactNameLabel, contactMessage, refresh);
     }
 
     private void addToStage(Stage stage, Scene scene, Group root, Node... nodes) {
