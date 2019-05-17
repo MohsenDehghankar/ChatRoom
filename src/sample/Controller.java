@@ -14,6 +14,12 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.ArrayList;
+
 
 public class Controller {
     private static Controller controller = new Controller();
@@ -33,6 +39,8 @@ public class Controller {
             if (key.getCode() == KeyCode.ESCAPE)
                 System.exit(0);
         });
+        Label label = new Label("status");
+        label.relocate(100, 100);
         TextField textField = new TextField("Enter User Name ...");
         textField.relocate(200, 200);
         textField.setOnAction(actionEvent -> {
@@ -41,17 +49,67 @@ public class Controller {
                 alert.setContentText("Invalid User Name ( no Space )");
                 alert.show();
             } else {
-                Client client = new Client(textField.getText());
-                showChatMenu(stage, client);
+                //TODO
+                connectToServer(textField.getText(), label, stage);
             }
         });
+        root.getChildren().add(label);
         root.getChildren().add(textField);
         stage.setScene(scene);
         stage.setTitle("Main Menu");
         stage.show();
     }
 
-    private void showChatMenu(Stage stage, Client loggedInClient) {
+
+    private void connectToServer(String name, Label status, Stage stage) {
+        try {
+            InetAddress ip = InetAddress.getByName("localhost");
+            Socket s = new Socket(ip, 1234);
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
+            dos.writeUTF(name);
+            status.setText("Connected");
+            //
+            Group root = new Group();
+            Scene scene = new Scene(root, 400, 400);
+            TextField contactName = new TextField("Enter Contact Name");
+            ListView<String> listView = new ListView<>();
+            listView.relocate(100, 100);
+            listView.addEventFilter(KeyEvent.KEY_PRESSED, (key) -> {
+                if (key.getCode() == KeyCode.ESCAPE)
+                    showMainMenu(stage);
+            });
+            //
+            String st = dis.readUTF();
+            ArrayList<String> clients = getArrayList(st);
+            for (String client : clients) {
+                if (!client.equals(name))
+                    listView.getItems().add(client);
+            }
+            root.getChildren().add(listView);
+            root.getChildren().add(contactName);
+            stage.setScene(scene);
+            stage.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+            status.setText("Not Connected :(");
+        }
+    }
+
+    private ArrayList<String> getArrayList(String fullString) {
+        String[] seperated = fullString.split("\\.");
+        ArrayList<String> result = new ArrayList<>();
+        for (String s : seperated) {
+            result.add(s);
+        }
+        return result;
+    }
+
+    private void chat(String name, String contactName, Stage stage) {
+
+    }
+
+    /*private void showChatMenu(Stage stage, Client loggedInClient) {
         Group root = new Group();
         Scene scene = new Scene(root, 400, 400);
         Label label = new Label(loggedInClient.getName());
@@ -102,5 +160,5 @@ public class Controller {
         stage.setTitle("Chat With :" + secondClient.getName());
         stage.setScene(scene);
         stage.show();
-    }
+    }*/
 }
