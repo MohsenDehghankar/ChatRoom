@@ -1,13 +1,14 @@
 package sample;
 
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -16,6 +17,7 @@ import javafx.stage.Stage;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -79,21 +81,95 @@ public class Controller {
                 if (key.getCode() == KeyCode.ESCAPE)
                     showMainMenu(stage);
             });
+            listView.setOnMouseClicked(mouseEvent -> {
+                String contact = listView.getSelectionModel().getSelectedItem();
+                chat(name, contact, stage, dis, dos);
+            });
             //
-            String st = dis.readUTF();
-            ArrayList<String> clients = getArrayList(st);
-            for (String client : clients) {
-                if (!client.equals(name))
-                    listView.getItems().add(client);
-            }
-            root.getChildren().add(listView);
-            root.getChildren().add(contactName);
-            stage.setScene(scene);
-            stage.show();
+            Button refresh = new Button("REFRESH");
+            refresh.relocate(10, 200);
+            refresh.setOnMouseClicked(mouseEvent -> {
+                try {
+                    dos.writeUTF("clients");
+                    fillTheClientsList(dis, name, listView);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            //
+            fillTheClientsList(dis, name, listView);
+            addToStage(stage, scene, root, listView, contactName, refresh);
         } catch (Exception e) {
             e.printStackTrace();
             status.setText("Not Connected :(");
         }
+    }
+
+    private void fillTheClientsList(DataInputStream dis, String name, ListView<String> listView) throws IOException {
+        if (dis.available() > 0) {
+            String st = dis.readUTF();
+            ArrayList<String> clients = getArrayList(st);
+            listView.getItems().removeAll();
+            for (String client : clients) {
+                if (!client.equals(name))
+                    listView.getItems().add(client);
+            }
+        }
+    }
+
+    private void chat(String name, String contactName, Stage stage, DataInputStream dis, DataOutputStream dos) {
+        Group root = new Group();
+        Scene scene = new Scene(root, 400, 400);
+        scene.setFill(Color.GRAY);
+        Label userName = new Label(name);
+        Label contactNameLabel = new Label(contactName);
+        userName.relocate(300, 300);
+        contactNameLabel.relocate(20, 300);
+        TextField message = new TextField("Write Message");
+        message.relocate(100, 250);
+        message.setOnAction(actionEvent -> {
+            try {
+                dos.writeUTF(message.getText() + "." + contactName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        Label contactMessage = new Label("His Message");
+        contactMessage.relocate(200, 100);
+        /*Thread t = new Thread(() -> {
+            while (true) {
+                try {
+                    if (dis.available() > 0) {
+                        contactMessage.setText(dis.readUTF());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t.start();*/
+        //TODO
+        Button refresh = new Button("refresh");
+        refresh.setOnMouseClicked(mouseEvent -> {
+            try {
+                if(dis.available() > 0){
+                    contactMessage.setText(dis.readUTF());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        refresh.relocate(200,10);
+        //
+        addToStage(stage, scene, root, message, userName, contactNameLabel, contactMessage,refresh);
+    }
+
+    private void addToStage(Stage stage, Scene scene, Group root, Node... nodes) {
+        for (Node node : nodes) {
+            root.getChildren().add(node);
+        }
+        stage.setScene(scene);
+        stage.show();
     }
 
     private ArrayList<String> getArrayList(String fullString) {
@@ -103,10 +179,6 @@ public class Controller {
             result.add(s);
         }
         return result;
-    }
-
-    private void chat(String name, String contactName, Stage stage) {
-
     }
 
     /*private void showChatMenu(Stage stage, Client loggedInClient) {

@@ -36,16 +36,10 @@ public class Server {
             System.out.println("Creating a new handler for this client...");
             String name = dis.readUTF();
             ClientHandler newHandler = new ClientHandler(s, name, dis, dos);
-            //
             System.out.println("client " + name + " connected");
-            //
             Thread t = new Thread(newHandler);
             System.out.println("Adding this client to active client list");
             clients.add(newHandler);
-            //TODO
-            for (ClientHandler client : clients) {
-                System.out.println(client.getName());
-            }
             t.start();
             i++;
         }
@@ -65,7 +59,6 @@ class ClientHandler implements Runnable {
     Socket s;
     boolean isloggedin;
 
-    // constructor
     public ClientHandler(Socket s, String name,
                          DataInputStream dis, DataOutputStream dos) {
         this.dis = dis;
@@ -86,14 +79,28 @@ class ClientHandler implements Runnable {
 
                 System.out.println(received);
 
-                if (received.equals("logout")) {
+               /* if (received.equals("logout")) {
                     this.isloggedin = false;
                     this.s.close();
                     break;
+                }*/
+                //
+                if (received.equals("clients")) {
+                    sendClientsArrayList();
+                } else if (received.equals("exit"))
+                    break;
+                else {
+                    String message = received.substring(0, received.lastIndexOf('.'));
+                    String contact = received.substring(received.lastIndexOf('.')+1);
+                    //TODO
+                    System.out.println(message + " to " + contact);
+                    for (ClientHandler client : Server.getClients()) {
+                        if (client.getName().equals(contact))
+                            client.dos.writeUTF(message);
+                    }
                 }
-
                 // break the string into message and recipient part
-                String[] receiveds = received.split(" ");
+                /*String[] receiveds = received.split(" ");
                 String MsgToSend = receiveds[0];
                 String recipient = receiveds[1];
 
@@ -109,7 +116,7 @@ class ClientHandler implements Runnable {
                         mc.dos.writeUTF(this.name + " : " + MsgToSend);
                         break;
                     }
-                }
+                }*/
             } catch (IOException e) {
 
                 e.printStackTrace();
