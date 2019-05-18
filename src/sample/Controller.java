@@ -92,12 +92,12 @@ public class Controller {
                 try {
                     dos.writeUTF("clients");
                     if (dis.available() > 0)
-                        fillTheClientsList(dis, name, listView);
+                        fillTheClientsList(dis, name,listView);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
-            fillTheClientsList(dis, name, listView);
+            fillTheClientsList(dis, name,listView);
             addToStage(stage, scene, root, listView, contactName, refresh);
         } catch (Exception e) {
             e.printStackTrace();
@@ -105,11 +105,11 @@ public class Controller {
         }
     }
 
-    private void fillTheClientsList(DataInputStream dis, String name, ListView<String> listView) throws IOException {
+    private void fillTheClientsList(DataInputStream dis, String name,ListView<String> listView) throws IOException {
         if (dis.available() > 0) {
             String st = dis.readUTF();
             if (st.substring(0, 4).equals("5780")) {
-                st = st.substring(3);
+                st = st.substring(4);
                 ArrayList<String> clients = getArrayList(st);
                 listView.getItems().removeAll();
                 for (String client : clients) {
@@ -161,7 +161,8 @@ public class Controller {
                     try {
                         if (dis.available() > 0) {
                             String received = dis.readUTF();
-                            if (!received.substring(0, 4).equals("5780")) {
+                            if (received.length() < 4
+                                    || (!received.substring(0, 4).equals("5780"))) {
                                 String contactSent = received.substring(received.lastIndexOf('.') + 1);
                                 String messageSent = received.substring(0, received.lastIndexOf('.'));
                                 if (contactSent.equals(contactName))
@@ -191,7 +192,19 @@ public class Controller {
                 e.printStackTrace();
             }
         });
+        /*message.addEventFilter(KeyEvent.KEY_PRESSED, (keyEvent -> {
+            if(keyEvent.getCode() == KeyCode.ESCAPE)
+
+        }));*/
         return message;
+    }
+
+    private void showAvailableClients(Stage stage,String currentClientName,DataInputStream dis){
+        Group root = new Group();
+        Scene scene = new Scene(root,400,400);
+
+
+       /* addToStage(stage,scene,root,);*/
     }
 
     private void addToStage(Stage stage, Scene scene, Group root, Node... nodes) {
