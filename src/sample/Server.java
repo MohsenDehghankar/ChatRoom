@@ -76,47 +76,19 @@ class ClientHandler implements Runnable {
             try {
                 // receive the string
                 received = dis.readUTF();
-
                 System.out.println(received);
-
-               /* if (received.equals("logout")) {
-                    this.isloggedin = false;
-                    this.s.close();
-                    break;
-                }*/
-                //
                 if (received.equals("clients")) {
                     sendClientsArrayList();
                 } else if (received.equals("exit"))
                     break;
                 else {
                     String message = received.substring(0, received.lastIndexOf('.'));
-                    String contact = received.substring(received.lastIndexOf('.')+1);
-                    //TODO
-                    System.out.println(message + " to " + contact);
+                    String contact = received.substring(received.lastIndexOf('.') + 1);
                     for (ClientHandler client : Server.getClients()) {
                         if (client.getName().equals(contact))
-                            client.dos.writeUTF(message);
+                            client.dos.writeUTF(message + "." + name);
                     }
                 }
-                // break the string into message and recipient part
-                /*String[] receiveds = received.split(" ");
-                String MsgToSend = receiveds[0];
-                String recipient = receiveds[1];
-
-                // search for the recipient in the connected devices list.
-                // clients is the vector storing client of active users
-                for (ClientHandler mc : Server.getClients()) {
-                    // if the recipient is found, write on its
-                    // output stream
-                    //
-                    System.out.println(mc.name);
-                    //
-                    if (mc.name.equals(recipient) && mc.isloggedin == true) {
-                        mc.dos.writeUTF(this.name + " : " + MsgToSend);
-                        break;
-                    }
-                }*/
             } catch (IOException e) {
 
                 e.printStackTrace();
@@ -138,7 +110,7 @@ class ClientHandler implements Runnable {
     }
 
     private void sendClientsArrayList() {
-        String clients = "";
+        String clients = "5780";
         for (int i = 0; i < Server.getClients().size(); i++) {
             if (i != 0)
                 clients += "." + Server.getClients().get(i).getName();

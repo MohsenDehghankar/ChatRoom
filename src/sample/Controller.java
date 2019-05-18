@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class Controller {
@@ -58,7 +59,7 @@ public class Controller {
         root.getChildren().add(label);
         root.getChildren().add(textField);
         stage.setScene(scene);
-        stage.setTitle("Main Menu");
+        stage.setTitle("Chat Room");
         stage.show();
     }
 
@@ -71,7 +72,6 @@ public class Controller {
             DataOutputStream dos = new DataOutputStream(s.getOutputStream());
             dos.writeUTF(name);
             status.setText("Connected");
-            //
             Group root = new Group();
             Scene scene = new Scene(root, 400, 400);
             TextField contactName = new TextField("Enter Contact Name");
@@ -83,9 +83,9 @@ public class Controller {
             });
             listView.setOnMouseClicked(mouseEvent -> {
                 String contact = listView.getSelectionModel().getSelectedItem();
-                chat(name, contact, stage, dis, dos);
+                if (contact != null)
+                    chat(name, contact, stage, dis, dos);
             });
-            //
             Button refresh = new Button("REFRESH");
             refresh.relocate(10, 200);
             refresh.setOnMouseClicked(mouseEvent -> {
@@ -97,7 +97,6 @@ public class Controller {
                     e.printStackTrace();
                 }
             });
-            //
             fillTheClientsList(dis, name, listView);
             addToStage(stage, scene, root, listView, contactName, refresh);
         } catch (Exception e) {
@@ -109,12 +108,14 @@ public class Controller {
     private void fillTheClientsList(DataInputStream dis, String name, ListView<String> listView) throws IOException {
         if (dis.available() > 0) {
             String st = dis.readUTF();
-            ArrayList<String> clients = getArrayList(st);
-            listView.getItems().removeAll();
-
-            for (String client : clients) {
-                if (!client.equals(name) && !listView.getItems().contains(client))
-                    listView.getItems().add(client);
+            if (st.substring(0, 4).equals("5780")) {
+                st = st.substring(3);
+                ArrayList<String> clients = getArrayList(st);
+                listView.getItems().removeAll();
+                for (String client : clients) {
+                    if (!client.equals(name) && !listView.getItems().contains(client))
+                        listView.getItems().add(client);
+                }
             }
         }
     }
@@ -123,36 +124,34 @@ public class Controller {
         Group root = new Group();
         Scene scene = new Scene(root, 400, 400);
         scene.setFill(Color.GRAY);
-        Label userName = new Label(name);
-        Label contactNameLabel = new Label(contactName);
-        userName.relocate(300, 300);
-        contactNameLabel.relocate(20, 300);
-        TextField message = new TextField("Write Message");
-        message.relocate(100, 250);
-        message.setOnAction(actionEvent -> {
-            try {
-                dos.writeUTF(message.getText() + "." + contactName);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        Label contactMessage = new Label("His Message");
-        contactMessage.relocate(200, 100);
-        /*Thread t = new Thread(() -> {
-            while (true) {
-                try {
-                    if (dis.available() > 0) {
-                        contactMessage.setText(dis.readUTF());
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        t.start();*/
-        //
+        Label userName = new Label("You");
+        Label contactNameLabel = new Label("Your Contact : " + contactName);
+        userName.relocate(300, 10);
+        contactNameLabel.relocate(20, 10);
+        ListView<String>[] messageHistories = getChatHistoryLists();
+        TextField message = getMessageBox(dos, contactName, messageHistories[1]);
+        Thread thread = getRefreshingThread(dis, contactName, messageHistories[0]);
+        thread.setDaemon(true);
+        thread.start();
+        addToStage(stage, scene, root, message, userName, contactNameLabel, messageHistories[0], messageHistories[1]);
+    }
+
+    private ListView<String>[] getChatHistoryLists() {
+        ListView<String>[] lists = new ListView[2];
+        ListView<String> firstClient = new ListView<>();
+        ListView<String> secondClient = new ListView<>();
+        firstClient.setPrefSize(150, 300);
+        secondClient.setPrefSize(150, 300);
+        firstClient.relocate(220, 30);
+        secondClient.relocate(30, 30);
+        lists[1] = firstClient;
+        lists[0] = secondClient;
+        return lists;
+    }
+
+    private Thread getRefreshingThread(DataInputStream dis, String contactName, ListView<String> contactMessage) {
         Thread thread = new Thread(() -> {
-            while (true){
+            while (true) {
                 try {
                     Thread.sleep(500);
                 } catch (InterruptedException e) {
@@ -160,8 +159,14 @@ public class Controller {
                 }
                 Platform.runLater(() -> {
                     try {
-                        if(dis.available() > 0){
-                            contactMessage.setText(dis.readUTF());
+                        if (dis.available() > 0) {
+                            String received = dis.readUTF();
+                            if (!received.substring(0, 4).equals("5780")) {
+                                String contactSent = received.substring(received.lastIndexOf('.') + 1);
+                                String messageSent = received.substring(0, received.lastIndexOf('.'));
+                                if (contactSent.equals(contactName))
+                                    contactMessage.getItems().add(messageSent);
+                            }
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -169,23 +174,24 @@ public class Controller {
                 });
             }
         });
-        thread.setDaemon(true);
-        thread.start();
-        //
-        //TODO
-        Button refresh = new Button("refresh");
-        refresh.setOnMouseClicked(mouseEvent -> {
+        return thread;
+    }
+
+    private TextField getMessageBox(DataOutputStream dos, String contactName, ListView<String> firstList) {
+        TextField message = new TextField("");
+        message.setPromptText("Type Message ...");
+        message.relocate(170, 370);
+        message.setPrefWidth(200);
+        message.setOnAction(actionEvent -> {
             try {
-                if (dis.available() > 0) {
-                    contactMessage.setText(dis.readUTF());
-                }
+                dos.writeUTF(message.getText() + "." + contactName);
+                firstList.getItems().add(message.getText());
+                message.setText("");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
-        refresh.relocate(200, 10);
-        //
-        addToStage(stage, scene, root, message, userName, contactNameLabel, contactMessage, refresh);
+        return message;
     }
 
     private void addToStage(Stage stage, Scene scene, Group root, Node... nodes) {
