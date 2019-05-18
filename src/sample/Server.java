@@ -52,12 +52,11 @@ public class Server {
 
 // ClientHandler class
 class ClientHandler implements Runnable {
-    Scanner scn = new Scanner(System.in);
     private String name;
-    final DataInputStream dis;
-    final DataOutputStream dos;
-    Socket s;
-    boolean isloggedin;
+    private final DataInputStream dis;
+    private final DataOutputStream dos;
+    private Socket s;
+    private boolean isloggedin;
 
     public ClientHandler(Socket s, String name,
                          DataInputStream dis, DataOutputStream dos) {

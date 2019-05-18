@@ -222,10 +222,10 @@ public class Controller {
                 e.printStackTrace();
             }
         });
-        /*message.addEventFilter(KeyEvent.KEY_PRESSED, (keyEvent -> {
+        message.addEventFilter(KeyEvent.KEY_PRESSED, (keyEvent -> {
             if(keyEvent.getCode() == KeyCode.ESCAPE)
 
-        }));*/
+        }));
         return message;
     }
 
