@@ -20,12 +20,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.List;
 
 
 public class Controller {
     private static Controller controller = new Controller();
+    private DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
+
 
     private Controller() {
     }
@@ -74,7 +77,6 @@ public class Controller {
             status.setText("Connected");
             Group root = new Group();
             Scene scene = new Scene(root, 400, 400);
-            TextField contactName = new TextField("Enter Contact Name");
             ListView<String> listView = new ListView<>();
             listView.relocate(100, 100);
             listView.addEventFilter(KeyEvent.KEY_PRESSED, (key) -> {
@@ -84,7 +86,7 @@ public class Controller {
             listView.setOnMouseClicked(mouseEvent -> {
                 String contact = listView.getSelectionModel().getSelectedItem();
                 if (contact != null)
-                    chat(name, contact, stage, dis, dos);
+                    chat(contact, stage, dis, dos);
             });
             Button refresh = new Button("REFRESH");
             refresh.relocate(10, 200);
@@ -92,20 +94,20 @@ public class Controller {
                 try {
                     dos.writeUTF("clients");
                     if (dis.available() > 0)
-                        fillTheClientsList(dis, name,listView);
+                        fillTheClientsList(dis, name, listView);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
-            fillTheClientsList(dis, name,listView);
-            addToStage(stage, scene, root, listView, contactName, refresh);
+            fillTheClientsList(dis, name, listView);
+            addToStage(stage, scene, root, listView, refresh);
         } catch (Exception e) {
             e.printStackTrace();
             status.setText("Not Connected :(");
         }
     }
 
-    private void fillTheClientsList(DataInputStream dis, String name,ListView<String> listView) throws IOException {
+    private void fillTheClientsList(DataInputStream dis, String name, ListView<String> listView) throws IOException {
         if (dis.available() > 0) {
             String st = dis.readUTF();
             if (st.substring(0, 4).equals("5780")) {
@@ -120,36 +122,51 @@ public class Controller {
         }
     }
 
-    private void chat(String name, String contactName, Stage stage, DataInputStream dis, DataOutputStream dos) {
+    private void chat(String contactName, Stage stage, DataInputStream dis, DataOutputStream dos) {
         Group root = new Group();
-        Scene scene = new Scene(root, 400, 400);
+        Scene scene = new Scene(root, 600, 600);
         scene.setFill(Color.GRAY);
         Label userName = new Label("You");
         Label contactNameLabel = new Label("Your Contact : " + contactName);
         userName.relocate(300, 10);
-        contactNameLabel.relocate(20, 10);
-        ListView<String>[] messageHistories = getChatHistoryLists();
-        TextField message = getMessageBox(dos, contactName, messageHistories[1]);
-        Thread thread = getRefreshingThread(dis, contactName, messageHistories[0]);
+        Label replyTo = getReplyToLabel();
+        contactNameLabel.relocate(30, 10);
+        ListView<String>[] messageHistories = getChatHistoryLists(replyTo);
+        TextField message = getMessageBox(dos, contactName, messageHistories, replyTo);
+        Thread thread = getRefreshingThread(dis, contactName, messageHistories);
         thread.setDaemon(true);
         thread.start();
-        addToStage(stage, scene, root, message, userName, contactNameLabel, messageHistories[0], messageHistories[1]);
+        addToStage(stage, scene, root, message, userName, contactNameLabel,
+                messageHistories[0], messageHistories[1], replyTo);
     }
 
-    private ListView<String>[] getChatHistoryLists() {
+    private Label getReplyToLabel() {
+        Label replyTo = new Label("Reply To : No Message");
+        replyTo.relocate(100, 550);
+        return replyTo;
+    }
+
+    private ListView<String>[] getChatHistoryLists(Label replyTo) { // first and second reversed
         ListView<String>[] lists = new ListView[2];
         ListView<String> firstClient = new ListView<>();
         ListView<String> secondClient = new ListView<>();
-        firstClient.setPrefSize(150, 300);
-        secondClient.setPrefSize(150, 300);
-        firstClient.relocate(220, 30);
+        firstClient.setPrefSize(250, 500);
+        secondClient.setPrefSize(250, 500);
+        firstClient.relocate(300, 30);
         secondClient.relocate(30, 30);
+        secondClient.setOnMouseClicked(mouseEvent -> {
+            String replyingMessage = secondClient.getSelectionModel().getSelectedItem();
+            if (replyingMessage.length() < 11 || !replyingMessage.substring(0, 11).equals("Reply To : "))
+                replyTo.setText("Reply To : " + replyingMessage);
+            else
+                replyTo.setText("Reply To : " + replyingMessage.substring(replyingMessage.lastIndexOf('>') + 2));
+        });
         lists[1] = firstClient;
         lists[0] = secondClient;
         return lists;
     }
 
-    private Thread getRefreshingThread(DataInputStream dis, String contactName, ListView<String> contactMessage) {
+    private Thread getRefreshingThread(DataInputStream dis, String contactName, ListView<String>[] lists) {
         Thread thread = new Thread(() -> {
             while (true) {
                 try {
@@ -165,8 +182,11 @@ public class Controller {
                                     || (!received.substring(0, 4).equals("5780"))) {
                                 String contactSent = received.substring(received.lastIndexOf('.') + 1);
                                 String messageSent = received.substring(0, received.lastIndexOf('.'));
-                                if (contactSent.equals(contactName))
-                                    contactMessage.getItems().add(messageSent);
+                                if (contactSent.equals(contactName)) {
+
+                                    lists[0].getItems().add(messageSent);
+                                    lists[1].getItems().add(" ");
+                                }
                             }
                         }
                     } catch (IOException e) {
@@ -178,16 +198,26 @@ public class Controller {
         return thread;
     }
 
-    private TextField getMessageBox(DataOutputStream dos, String contactName, ListView<String> firstList) {
+    private TextField getMessageBox(DataOutputStream dos, String contactName,
+                                    ListView<String>[] lists, Label replyTo) {
         TextField message = new TextField("");
         message.setPromptText("Type Message ...");
-        message.relocate(170, 370);
+        message.relocate(300, 552);
         message.setPrefWidth(200);
         message.setOnAction(actionEvent -> {
             try {
-                dos.writeUTF(message.getText() + "." + contactName);
-                firstList.getItems().add(message.getText());
+                String reply = replyTo.getText();
+                String relation = " -> ";
+                if (reply.equals("Reply To : No Message") || reply.equals("Reply To :  ")) {
+                    reply = "";
+                    relation = "";
+                }
+                String toSend = reply + relation + message.getText();
+                dos.writeUTF(toSend + "." + contactName);
+                lists[1].getItems().add(toSend);
+                lists[0].getItems().add(" ");
                 message.setText("");
+                replyTo.setText("Reply To : No Message");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -197,14 +227,6 @@ public class Controller {
 
         }));*/
         return message;
-    }
-
-    private void showAvailableClients(Stage stage,String currentClientName,DataInputStream dis){
-        Group root = new Group();
-        Scene scene = new Scene(root,400,400);
-
-
-       /* addToStage(stage,scene,root,);*/
     }
 
     private void addToStage(Stage stage, Scene scene, Group root, Node... nodes) {
@@ -224,56 +246,4 @@ public class Controller {
         return result;
     }
 
-    /*private void showChatMenu(Stage stage, Client loggedInClient) {
-        Group root = new Group();
-        Scene scene = new Scene(root, 400, 400);
-        Label label = new Label(loggedInClient.getName());
-        label.relocate(10, 10);
-        ListView<String> otherClients = new ListView<>();
-        otherClients.relocate(100, 10);
-        otherClients.addEventHandler(KeyEvent.KEY_PRESSED, (key -> {
-            if (key.getCode() == KeyCode.ESCAPE)
-                showMainMenu(stage);
-        }));
-
-        for (Client client : Client.getClients()) {
-            if (!client.getName().equals(loggedInClient.getName())) {
-                otherClients.getItems().add(client.getName());
-            }
-        }
-        otherClients.setOnMouseClicked(mouseEvent -> {
-            Client contact = Client.searchClient(otherClients.getSelectionModel().getSelectedItem());
-            if (contact != null)
-                showChat(stage, loggedInClient,
-                        contact);
-            else
-                System.out.println(otherClients.getSelectionModel().getSelectedItems());
-        });
-        root.getChildren().add(otherClients);
-        root.getChildren().add(label);
-        stage.setTitle("Chat Selection");
-        stage.setScene(scene);
-        stage.show();
-    }
-
-    private void showChat(Stage stage, Client firstClient, Client secondClient) {
-        Group root = new Group();
-        Scene scene = new Scene(root, 400, 400);
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, (key -> {
-            if (key.getCode() == KeyCode.ESCAPE)
-                showChatMenu(stage,firstClient);
-        }));
-        Label firstClientName = new Label("You : " + firstClient.getName());
-        Label secondClientName = new Label("Your Contact : " + secondClient.getName());
-        firstClientName.relocate(300,350);
-        secondClientName.relocate(20,350);
-        // TODO
-
-        //
-        root.getChildren().add(firstClientName);
-        root.getChildren().add(secondClientName);
-        stage.setTitle("Chat With :" + secondClient.getName());
-        stage.setScene(scene);
-        stage.show();
-    }*/
 }
