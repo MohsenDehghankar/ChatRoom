@@ -3,18 +3,24 @@ package sample;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+import javax.imageio.ImageIO;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -86,7 +92,6 @@ public class Controller {
         ListView<String> listView = new ListView<>();
         listView.relocate(10, 30);
         listView.setPrefSize(200, 200);
-
         Thread listRefreshThread = getClientListRefreshingThread(name, dos, dis, listView);
         listRefreshThread.setDaemon(true);
         listRefreshThread.start();
@@ -99,12 +104,21 @@ public class Controller {
                     e.printStackTrace();
                 }
                 showMainMenu(stage);
+            } else if (key.getCode() == KeyCode.J) {
+                //TODO
+                showImage();
             }
         });
         listView.setOnMouseClicked(mouseEvent -> {
             String contact = listView.getSelectionModel().getSelectedItem();
             if (contact != null) {
                 listRefreshThread.interrupt();
+                //TODO
+                try {
+                    dos.writeUTF(CODE + "chat");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 chat(contact, name, stage, dis, dos);
             }
         });
@@ -156,13 +170,13 @@ public class Controller {
 
     private void chat(String contactName, String name, Stage stage, DataInputStream dis, DataOutputStream dos) {
         Group root = new Group();
-        Scene scene = new Scene(root, 600, 600);
+        Scene scene = new Scene(root, 500, 500);
         scene.setFill(Color.GRAY);
         Label userName = new Label("You : " + name);
         Label contactNameLabel = new Label("Your Contact : " + contactName);
-        userName.relocate(300, 10);
+        userName.relocate(250, 10);
         Label replyTo = getReplyToLabel();
-        contactNameLabel.relocate(30, 10);
+        contactNameLabel.relocate(5, 10);
         ListView<String>[] messageHistories = getChatHistoryLists(replyTo);
         TextField message = getMessageBox(dos, contactName, messageHistories, replyTo);
         Thread thread = getChatRefreshingThread(dis, contactName, messageHistories);
@@ -171,6 +185,11 @@ public class Controller {
         message.addEventHandler(KeyEvent.KEY_PRESSED, (keyEvent -> {
             if (keyEvent.getCode() == KeyCode.ESCAPE) {
                 thread.interrupt();
+                try {
+                    dos.writeUTF(CODE + "exit");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 showClientsList(stage, name, dos, dis);
             }
         }));
@@ -178,26 +197,51 @@ public class Controller {
                 messageHistories[0], messageHistories[1], replyTo);
     }
 
+    //TODO
+    private void showImage() {
+        String imageAddress = "b.jpg";
+        Stage stage1 = new Stage();
+        Group group = new Group();
+        Scene scene = new Scene(group, 400, 400);
+        scene.setFill(Color.BLACK);
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Images (*.jpg)", "*.jpg");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(filter);
+        fileChooser.setTitle("choose file");
+        File file2 = new File(System.getProperty("user.home"),"Desktop/AP Project/Tamrin3/ChatRoom");
+        fileChooser.setInitialDirectory(file2);
+        File file = fileChooser.showOpenDialog(stage1);
+
+
+        Image image = new Image(file.toURI().toString());
+        ImageView view = new ImageView(image);
+        group.getChildren().add(view);
+        stage1.setScene(scene);
+        stage1.show();
+    }
+
     private Label getReplyToLabel() {
         Label replyTo = new Label("Reply To : No Message");
-        replyTo.relocate(100, 550);
+        replyTo.relocate(100, 450);
         return replyTo;
     }
 
-    private ListView<String>[] getChatHistoryLists(Label replyTo) { // first and second reversed
+    private ListView<String>[] getChatHistoryLists(Label replyTo) {
         ListView<String>[] lists = new ListView[2];
         ListView<String> firstClient = new ListView<>();
         ListView<String> secondClient = new ListView<>();
-        firstClient.setPrefSize(250, 500);
-        secondClient.setPrefSize(250, 500);
-        firstClient.relocate(300, 30);
-        secondClient.relocate(30, 30);
+        firstClient.setPrefSize(240, 400);
+        secondClient.setPrefSize(240, 400);
+        firstClient.relocate(250, 30);
+        secondClient.relocate(5, 30);
         secondClient.setOnMouseClicked(mouseEvent -> {
             String replyingMessage = secondClient.getSelectionModel().getSelectedItem();
-            if (replyingMessage.length() < 11 || !replyingMessage.substring(0, 11).equals("Reply To : "))
-                replyTo.setText("Reply To : " + replyingMessage);
-            else
-                replyTo.setText("Reply To : " + replyingMessage.substring(replyingMessage.lastIndexOf('>') + 2));
+            if (replyingMessage != null) {
+                if (replyingMessage.length() < 11 || !replyingMessage.substring(0, 11).equals("Reply To : "))
+                    replyTo.setText("Reply To : " + replyingMessage);
+                else
+                    replyTo.setText("Reply To : " + replyingMessage.substring(replyingMessage.lastIndexOf('>') + 2));
+            }
         });
         lists[1] = firstClient;
         lists[0] = secondClient;
@@ -239,7 +283,7 @@ public class Controller {
                                     ListView<String>[] lists, Label replyTo) {
         TextField message = new TextField("");
         message.setPromptText("Type Message ...");
-        message.relocate(300, 552);
+        message.relocate(250, 440);
         message.setPrefWidth(200);
         message.setOnAction(actionEvent -> {
             try {

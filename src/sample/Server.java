@@ -38,6 +38,7 @@ public class Server {
                 toDelete.add(client);
         }
         for (ClientHandler handler : toDelete) {
+            System.out.println("Client : " + handler.getClientName() + " Disconnected.");
             clients.remove(handler);
         }
     }

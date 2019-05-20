@@ -8,7 +8,7 @@ import java.net.Socket;
 public class ClientHandler implements Runnable {
 
     private static final String CODE = "5780";
-    private String name;
+    private String clientName;
     private final DataInputStream dataInputStream;
     private final DataOutputStream dataOutputStream;
     private Socket s;
@@ -22,7 +22,7 @@ public class ClientHandler implements Runnable {
                          DataInputStream dis, DataOutputStream dos) {
         this.dataInputStream = dis;
         this.dataOutputStream = dos;
-        this.name = name;
+        this.clientName = name;
         this.s = s;
         this.isLoggedIn = true;
     }
@@ -31,6 +31,7 @@ public class ClientHandler implements Runnable {
     public void run() {
         sendClientsArrayList();
         String received;
+        mainLoop:
         while (true) {
             try {
                 received = dataInputStream.readUTF();
@@ -40,13 +41,9 @@ public class ClientHandler implements Runnable {
                     isLoggedIn = false;
                     Server.checkOnlineClients();
                     break;
-                } else {
-                    String message = received.substring(0, received.lastIndexOf('.'));
-                    String contact = received.substring(received.lastIndexOf('.') + 1);
-                    for (sample.ClientHandler client : Server.getClients()) {
-                        if (client.getName().equals(contact))
-                            client.dataOutputStream.writeUTF(message + "." + name);
-                    }
+                } else if (received.equals(CODE + "chat")) {
+                    Chat chat = new Chat(dataInputStream,dataOutputStream,clientName);
+                    chat.startChat();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -61,17 +58,17 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    public String getName() {
-        return name;
+    public String getClientName() {
+        return clientName;
     }
 
     private void sendClientsArrayList() {
         String clients = CODE;
         for (int i = 0; i < Server.getClients().size(); i++) {
             if (i != 0)
-                clients += "." + Server.getClients().get(i).getName();
+                clients += "." + Server.getClients().get(i).getClientName();
             else
-                clients += Server.getClients().get(i).getName();
+                clients += Server.getClients().get(i).getClientName();
         }
         try {
             dataOutputStream.writeUTF(clients);
@@ -88,7 +85,7 @@ public class ClientHandler implements Runnable {
         return dataOutputStream;
     }
 
-    public boolean getLoggedInStatus(){
+    public boolean getLoggedInStatus() {
         return isLoggedIn;
     }
 }
