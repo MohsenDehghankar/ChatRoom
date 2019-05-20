@@ -14,10 +14,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import javax.imageio.ImageIO;
+import javax.swing.text.View;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -177,7 +179,7 @@ public class Controller {
         userName.relocate(250, 10);
         Label replyTo = getReplyToLabel();
         contactNameLabel.relocate(5, 10);
-        ListView<String>[] messageHistories = getChatHistoryLists(replyTo);
+        ListView[] messageHistories = getChatHistoryLists(replyTo);
         TextField message = getMessageBox(dos, contactName, messageHistories, replyTo);
         Thread thread = getChatRefreshingThread(dis, contactName, messageHistories);
         thread.setDaemon(true);
@@ -193,29 +195,52 @@ public class Controller {
                 showClientsList(stage, name, dos, dis);
             }
         }));
+        Button emjo = getEmojis(10, 440);
         addToStage(stage, scene, root, message, userName, contactNameLabel,
-                messageHistories[0], messageHistories[1], replyTo);
+                messageHistories[0], messageHistories[1], replyTo, emjo);
+    }
+
+    private Button getEmojis(int x, int y) {
+        Stage stage = new Stage();
+        Group root = new Group();
+        Scene scene = new Scene(root, 300, 300);
+        stage.setScene(scene);
+        Button emoji = new Button("EMOJI");
+        emoji.relocate(x, y);
+        ListView listView = new ListView();
+        for (int i = 1; i <= 4; i++) {
+            listView.getItems().add(new ImageView(new Image("images/" + i + ".jpg")));
+        }
+        root.getChildren().add(listView);
+        emoji.setOnMouseClicked(mouseEvent -> {
+            stage.show();
+        });
+        return emoji;
     }
 
     //TODO
     private void showImage() {
-        String imageAddress = "b.jpg";
+        ListView listView = new ListView<>();
+        listView.getItems().add("ladsg");
         Stage stage1 = new Stage();
         Group group = new Group();
-        Scene scene = new Scene(group, 400, 400);
+        Scene scene = new Scene(group, 800, 800);
         scene.setFill(Color.BLACK);
         FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("Images (*.jpg)", "*.jpg");
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(filter);
         fileChooser.setTitle("choose file");
-        File file2 = new File(System.getProperty("user.home"),"Desktop/AP Project/Tamrin3/ChatRoom");
+        File file2 = new File(System.getProperty("user.home"), "Desktop/AP Project/Tamrin3/ChatRoom/src/images");
         fileChooser.setInitialDirectory(file2);
         File file = fileChooser.showOpenDialog(stage1);
 
 
         Image image = new Image(file.toURI().toString());
         ImageView view = new ImageView(image);
+        listView.getItems().add(view);
+        listView.relocate(500, 500);
         group.getChildren().add(view);
+        group.getChildren().add(listView);
         stage1.setScene(scene);
         stage1.show();
     }
@@ -227,15 +252,15 @@ public class Controller {
     }
 
     private ListView<String>[] getChatHistoryLists(Label replyTo) {
-        ListView<String>[] lists = new ListView[2];
-        ListView<String> firstClient = new ListView<>();
-        ListView<String> secondClient = new ListView<>();
+        ListView[] lists = new ListView[2];
+        ListView firstClient = new ListView();
+        ListView secondClient = new ListView();
         firstClient.setPrefSize(240, 400);
         secondClient.setPrefSize(240, 400);
         firstClient.relocate(250, 30);
         secondClient.relocate(5, 30);
         secondClient.setOnMouseClicked(mouseEvent -> {
-            String replyingMessage = secondClient.getSelectionModel().getSelectedItem();
+            String replyingMessage = secondClient.getSelectionModel().getSelectedItem().toString();
             if (replyingMessage != null) {
                 if (replyingMessage.length() < 11 || !replyingMessage.substring(0, 11).equals("Reply To : "))
                     replyTo.setText("Reply To : " + replyingMessage);

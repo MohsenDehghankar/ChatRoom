@@ -2,13 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cdb932d9-7e58-4d94-93a9-e7b232ef17da" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/sample/Chat.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/ChatRoom/sample/ClientHandler.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ChatRoom/sample/ClientHandler.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/b.jpg" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/out/production/ChatRoom/sample/Controller.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/ChatRoom/sample/Controller.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sample/ClientHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/sample/ClientHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/sample/Controller.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/sample/Controller.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sample/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/sample/Server.java" afterDir="false" />
     </list>
     <ignored path="JavaFxApplication.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -94,7 +91,7 @@
         <entry file="file://$PROJECT_DIR$/src/sample/ClientHandler.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="246">
-              <caret line="46" column="17" lean-forward="true" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
+              <caret line="46" column="17" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
               <folding>
                 <element signature="imports" expanded="true" />
                 <element signature="e#451#452#0" expanded="true" />
@@ -112,7 +109,7 @@
         <entry file="file://$PROJECT_DIR$/src/sample/Chat.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="442">
-              <caret line="27" column="57" lean-forward="true" selection-start-line="27" selection-start-column="57" selection-end-line="27" selection-end-column="57" />
+              <caret line="27" column="57" selection-start-line="27" selection-start-column="57" selection-end-line="27" selection-end-column="57" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -123,18 +120,20 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/sample/Controller.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="148">
-              <caret line="210" column="98" selection-start-line="210" selection-start-column="98" selection-end-line="210" selection-end-column="98" />
+            <state relative-caret-position="202">
+              <caret line="213" column="10" selection-start-line="213" selection-start-column="10" selection-end-line="213" selection-end-column="10" />
               <folding>
                 <element signature="imports" expanded="true" />
+                <element signature="e#1168#1169#0" expanded="true" />
+                <element signature="e#1201#1202#0" expanded="true" />
                 <element signature="method#showMainMenu#0;class#Controller#0" />
                 <element signature="method#connectToServer#0;class#Controller#0" />
+                <element signature="method#showClientsList#0;class#Controller#0" />
                 <element signature="method#getClientListRefreshingThread#0;class#Controller#0" />
                 <element signature="method#getTheClientList#0;class#Controller#0" />
-                <element signature="method#chat#0;class#Controller#0" />
-                <element signature="method#getChatHistoryLists#0;class#Controller#0" />
+                <element signature="method#showImage#0;class#Controller#0" />
+                <element signature="method#getReplyToLabel#0;class#Controller#0" />
                 <element signature="method#getChatRefreshingThread#0;class#Controller#0" />
-                <element signature="method#getMessageBox#0;class#Controller#0" />
                 <element signature="method#addToStage#0;class#Controller#0" />
                 <element signature="method#getArrayList#0;class#Controller#0" />
               </folding>
@@ -234,7 +233,7 @@
     <property name="OverrideImplement.combined" value="false" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1558339553858" />
+    <property name="com.android.tools.idea.instantapp.provision.ProvisionBeforeRunTaskProvider.myTimeStamp" value="1558342660298" />
     <property name="dynamic.classpath" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../2048" />
     <property name="project.structure.last.edited" value="SDKs" />
@@ -405,12 +404,12 @@
       <option name="presentableId" value="Default" />
       <updated>1359379246138</updated>
       <workItem from="1359379250712" duration="1302000" />
-      <workItem from="1558027680705" duration="46791000" />
+      <workItem from="1558027680705" duration="49870000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="48093000" />
+    <option name="totallyTimeSpent" value="51172000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="54" y="-8" width="1320" height="784" extended-state="6" />
@@ -429,7 +428,7 @@
       <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32872504" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.38556066" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.3840246" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39938557" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -542,7 +541,7 @@
     <entry file="file://$PROJECT_DIR$/src/sample/ClientHandler.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="246">
-          <caret line="46" column="17" lean-forward="true" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
+          <caret line="46" column="17" selection-start-line="46" selection-start-column="17" selection-end-line="46" selection-end-column="17" />
           <folding>
             <element signature="imports" expanded="true" />
             <element signature="e#451#452#0" expanded="true" />
@@ -558,7 +557,7 @@
     <entry file="file://$PROJECT_DIR$/src/sample/Chat.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="442">
-          <caret line="27" column="57" lean-forward="true" selection-start-line="27" selection-start-column="57" selection-end-line="27" selection-end-column="57" />
+          <caret line="27" column="57" selection-start-line="27" selection-start-column="57" selection-end-line="27" selection-end-column="57" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
@@ -588,18 +587,20 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/sample/Controller.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="148">
-          <caret line="210" column="98" selection-start-line="210" selection-start-column="98" selection-end-line="210" selection-end-column="98" />
+        <state relative-caret-position="202">
+          <caret line="213" column="10" selection-start-line="213" selection-start-column="10" selection-end-line="213" selection-end-column="10" />
           <folding>
             <element signature="imports" expanded="true" />
+            <element signature="e#1168#1169#0" expanded="true" />
+            <element signature="e#1201#1202#0" expanded="true" />
             <element signature="method#showMainMenu#0;class#Controller#0" />
             <element signature="method#connectToServer#0;class#Controller#0" />
+            <element signature="method#showClientsList#0;class#Controller#0" />
             <element signature="method#getClientListRefreshingThread#0;class#Controller#0" />
             <element signature="method#getTheClientList#0;class#Controller#0" />
-            <element signature="method#chat#0;class#Controller#0" />
-            <element signature="method#getChatHistoryLists#0;class#Controller#0" />
+            <element signature="method#showImage#0;class#Controller#0" />
+            <element signature="method#getReplyToLabel#0;class#Controller#0" />
             <element signature="method#getChatRefreshingThread#0;class#Controller#0" />
-            <element signature="method#getMessageBox#0;class#Controller#0" />
             <element signature="method#addToStage#0;class#Controller#0" />
             <element signature="method#getArrayList#0;class#Controller#0" />
           </folding>
