@@ -17,13 +17,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-
 import javax.imageio.ImageIO;
 import javax.swing.text.View;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.time.format.DateTimeFormatter;
@@ -34,7 +31,6 @@ public class Controller {
     private static Controller controller = new Controller();
     private DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss");
     private static final String CODE = "5780";
-
     private Controller() {
     }
 
@@ -195,22 +191,51 @@ public class Controller {
                 showClientsList(stage, name, dos, dis);
             }
         }));
-        Button emjo = getEmojis(10, 440);
+        Button emjo = getEmojis(10, 440, dos, messageHistories, contactName);
         addToStage(stage, scene, root, message, userName, contactNameLabel,
                 messageHistories[0], messageHistories[1], replyTo, emjo);
     }
 
-    private Button getEmojis(int x, int y) {
+    private Button getEmojis(int x, int y, DataOutputStream dataOutputStream,
+                             ListView[] list, String contactName) {
         Stage stage = new Stage();
         Group root = new Group();
         Scene scene = new Scene(root, 300, 300);
         stage.setScene(scene);
         Button emoji = new Button("EMOJI");
         emoji.relocate(x, y);
-        ListView listView = new ListView();
+        ListView<ImageView> listView = new ListView<>();
         for (int i = 1; i <= 4; i++) {
-            listView.getItems().add(new ImageView(new Image("images/" + i + ".jpg")));
+           /* try {
+                //FileInputStream file = new FileInputStream("src/images/" + i + ".jpg");
+                Image image = new Image("src/images/" + i + ".jpg");
+                BufferedImagshoe first = ImageIO.read();
+                BufferedImage bufferedImage = new BufferedImage(33,33);
+                listView.getItems().add(new ImageView(new Image()));
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }*/
         }
+        listView.setOnMouseClicked(mouseEvent -> {
+            String toSend;
+            ImageView imageView = listView.getSelectionModel().getSelectedItem();
+            int index = listView.getItems().indexOf(imageView);
+            index++;
+            toSend = CODE + "emoji." + index + "." + contactName;
+            // 5780emoji.numberOfEmoji.contactName
+            try {
+                dataOutputStream.writeUTF(toSend);
+                list[1].getItems().add(imageView);
+                FileInputStream file = new FileInputStream("src/images/5780.jpg");
+
+                list[0].getItems().add(new ImageView(new Image(file)));
+                file.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            stage.close();
+        });
         root.getChildren().add(listView);
         emoji.setOnMouseClicked(mouseEvent -> {
             stage.show();
@@ -273,7 +298,7 @@ public class Controller {
         return lists;
     }
 
-    private Thread getChatRefreshingThread(DataInputStream dis, String contactName, ListView<String>[] lists) {
+    private Thread getChatRefreshingThread(DataInputStream dis, String contactName, ListView[] lists) {
         Thread thread = new Thread(() -> {
             while (!Thread.interrupted()) {
                 try {
@@ -285,7 +310,22 @@ public class Controller {
                     try {
                         if (dis.available() > 0) {
                             String received = dis.readUTF();
-                            if (received.length() < 4
+                            if (received.length() >= 10 &&
+                                    received.substring(0, 10).equals(CODE + "emoji.")) {
+                                String[] messages = received.split("\\.");
+                                String numberOfEmoji = messages[1];
+                                String contactSent = messages[2];
+                                FileInputStream fileInputStream = new FileInputStream("src/images/" + numberOfEmoji
+                                        + ".jpg");
+                                ImageView imageView = new ImageView(new Image(fileInputStream));
+                                fileInputStream.close();
+                                if (contactSent.equals(contactName)) {
+                                    lists[0].getItems().add(imageView);
+                                    FileInputStream file = new FileInputStream("src/images/5780.jpg");
+                                    lists[1].getItems().add(new ImageView(new Image(file)));
+                                    file.close();
+                                }
+                            } else if (received.length() < 4
                                     || (!received.substring(0, 4).equals("5780"))) {
                                 String contactSent = received.substring(received.lastIndexOf('.') + 1);
                                 String messageSent = received.substring(0, received.lastIndexOf('.'));
