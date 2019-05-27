@@ -9,6 +9,7 @@ import java.net.*;
 public class Server {
 
     private static ArrayList<ClientHandler> clients = new ArrayList<>();
+    private static ArrayList<Group> groups = new ArrayList<>();
     private static int i = 1;
 
     public static void main(String[] args) throws IOException {
@@ -45,5 +46,22 @@ public class Server {
 
     public static ArrayList<ClientHandler> getClients() {
         return clients;
+    }
+
+    public static void addGroup(Group group) {
+        groups.add(group);
+    }
+
+    public static ArrayList<Group> getGroups() {
+        return groups;
+    }
+
+
+    public static Group getGroupByName(String name) {
+        for (Group group : groups) {
+            if (group.getName().equals(name))
+                return group;
+        }
+        return null;
     }
 }

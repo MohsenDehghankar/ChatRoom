@@ -16,6 +16,7 @@ public class Chat {
         this.clientName = clientName;
     }
 
+
     public void startChat() throws IOException {
         String received;
         while (true) {
@@ -30,7 +31,8 @@ public class Chat {
         }
     }
 
-    private void sendMessage(String receivedMessage) throws IOException {
+    public void sendMessage(String receivedMessage) throws IOException {
+        receivedMessage = receivedMessage.substring(0, receivedMessage.lastIndexOf('.'));
         String message = receivedMessage.substring(0, receivedMessage.lastIndexOf('.'));
         String contact = receivedMessage.substring(receivedMessage.lastIndexOf('.') + 1);
         for (sample.ClientHandler client : Server.getClients()) {
@@ -41,8 +43,9 @@ public class Chat {
         }
     }
 
-    private void sendEmoji(String messageReceived) throws IOException {
-        //5780emoji.numberOfEmoji.contactName
+    public void sendEmoji(String messageReceived) throws IOException {
+        //5780emoji.numberOfEmoji.contactName.sender
+        messageReceived = messageReceived.substring(0, messageReceived.lastIndexOf('.'));
         String[] messageSplit = messageReceived.split("\\.");
         String contact = messageSplit[2];
         String toSend = messageReceived.substring(0, messageReceived.lastIndexOf('.') + 1);
