@@ -1,6 +1,5 @@
 package sample;
 
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.*;
 import javafx.scene.paint.Color;
 

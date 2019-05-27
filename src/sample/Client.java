@@ -65,15 +65,6 @@ public class Client extends Application {
         currentChat = new ClientChat(this, contact);
     }
 
-    /*public void startGroup(String CODE, String groupName, String members) {
-        try {
-            dataOutputStream.writeUTF(CODE + "group");
-            dataOutputStream.writeUTF(members + '.' + groupName);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
-
     public ClientChat getCurrentChat() {
         return currentChat;
     }
@@ -81,19 +72,6 @@ public class Client extends Application {
     public void sendExitToServer(String CODE) throws IOException {
         getDataOutputStream().writeUTF(CODE + "exit");
     }
-
-    /*public ArrayList<String> requestClientsList(String CODE) throws IOException {
-        getDataOutputStream().writeUTF(CODE + "clients");
-        if (getDataInputStream().available() > 0) {
-            String st = getDataInputStream().readUTF();
-            if (st.length() > 11 && st.substring(0, 11).equals("5780clients")) {
-                st = st.substring(11);
-                ArrayList<String> clients = getArrayList(st);
-                return clients;
-            }
-        }
-        return null;
-    }*/
 
     public ArrayList<String> requestGroupAndClientList(String CODE) throws IOException {
         getDataOutputStream().writeUTF(CODE + "list");
@@ -108,19 +86,6 @@ public class Client extends Application {
         return null;
     }
 
-    public ArrayList<String> requestGroupMessages(String CODE) throws IOException {
-        dataOutputStream.writeUTF(CODE + "messages");
-        if (dataInputStream.available() > 0) {
-            String st = dataInputStream.readUTF();
-            if (st.length() > 5 && st.substring(4).equals("5780")) {
-                st = st.substring(4);
-                String[] messages = st.split(" ");
-                return convertArrayToArrayList(messages);
-            }
-        }
-        return null;
-    }
-
     private ArrayList<String> convertArrayToArrayList(String[] strings) {
         ArrayList<String> result = new ArrayList<>();
         for (String message : strings) {
@@ -129,14 +94,6 @@ public class Client extends Application {
         return result;
     }
 
-    private ArrayList<String> getArrayList(String fullString) {
-        String[] seperated = fullString.split("\\.");
-        ArrayList<String> result = new ArrayList<>();
-        for (String s : seperated) {
-            result.add(s);
-        }
-        return result;
-    }
 
     public void createGroup(String groupName, String members) throws IOException {
         String toSend = "5780group." + name + "." + groupName + "." + members;
@@ -151,6 +108,10 @@ public class Client extends Application {
                 return false;
         }
         return true;
+    }
+
+    public void sendAddMemberRequest(String member) throws IOException {
+        dataOutputStream.writeUTF("5780addmember." + name + "." + member);
     }
 
 }

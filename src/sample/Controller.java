@@ -39,7 +39,7 @@ public class Controller {
 
     public void showMainMenu() {
         javafx.scene.Group root = new javafx.scene.Group();
-        Scene scene = new Scene(root, 200, 200);
+        Scene scene = new Scene(root, 300, 200);
         scene.setFill(Color.BLACK);
         scene.addEventHandler(KeyEvent.KEY_PRESSED, (key) -> {
             if (key.getCode() == KeyCode.ESCAPE)
@@ -79,69 +79,6 @@ public class Controller {
             statusLabel.setText("Not Connected :(");
         }
     }
-
-    /*private void showActionChooseMenu() {
-        javafx.scene.Group root = new javafx.scene.Group();
-        Scene scene = new Scene(root, 300, 300);
-        Button chat = new Button("Chat");
-        chat.setOnMouseClicked(mouseEvent -> {
-            showFirstMenu();
-        });
-        Button group = new Button("ServerGroup");
-        group.setOnMouseClicked(mouseEvent -> {
-            showGroupMenu();
-        });
-        Button exit = new Button("Exit");
-        exit.relocate(70, 200);
-        exit.setOnMouseClicked(mouseEvent -> {
-            try {
-                client.getDataOutputStream().writeUTF(CODE + "exit");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            showMainMenu();
-        });
-        chat.relocate(70, 50);
-        group.relocate(70, 150);
-        addToStage(stage, scene, root, chat, group, exit);
-    }*/
-
-    /*private void showGroupMenu() {
-        javafx.scene.Group root = new javafx.scene.Group();
-        Scene scene = new Scene(root, 400, 400);
-        Button create = new Button("Create ServerGroup");
-        create.relocate(10, 10);
-        ListView<String> groups = new ListView<>();
-        groups.relocate(150, 10);
-        Thread thread = new ListRefreshThread(groups, client, true);
-        thread.setDaemon(true);
-        thread.start();
-        TextField groupName = new TextField("enter name for group...");
-        TextField members = new TextField("enter members by space");
-        members.relocate(10, 250);
-        members.setPrefWidth(170);
-        groupName.relocate(10, 200);
-        groups.setOnMouseClicked(mouseEvent -> {
-            String selectedItem = groups.getSelectionModel().getSelectedItem();
-            thread.interrupt();
-            client.startGroup(CODE, selectedItem, "");
-            showChatScene(selectedItem, true);
-        });
-        create.setOnMouseClicked(mouseEvent -> {
-            thread.interrupt();
-            String name = groupName.getText();
-            //TODO
-            client.startGroup(CODE, name, members.getText());
-            showChatScene(name, true);
-        });
-        scene.addEventHandler(KeyEvent.KEY_PRESSED, (keyEvent -> {
-            if (keyEvent.getCode() == KeyCode.ESCAPE) {
-                thread.interrupt();
-                showActionChooseMenu();
-            }
-        }));
-        addToStage(stage, scene, root, groupName, members, create, groups);
-    }*/
 
     private void showFirstMenu() {
         String name = client.getName();
@@ -249,11 +186,6 @@ public class Controller {
                     listView[1].getItems().add(clientsAndGroup);
                 }
             }
-            /*listView.getItems().clear();
-            for (String client : clients) {
-                if (!client.equals(currentClient.getName()) && !listView.getItems().contains(client))
-                    listView.getItems().add(client);
-            }*/
         }
     }
 
@@ -274,8 +206,24 @@ public class Controller {
         thread.start();
         setMessageEvent(message, thread, isGroup);
         Button emojiButton = getEmojis(10, 440, messageHistories, isGroup, contactName);
+        if (isGroup)
+            root.getChildren().add(addMember());
         addToStage(stage, scene, root, message, userName, contactNameLabel,
                 messageHistories[0], messageHistories[1], replyTo, emojiButton);
+    }
+
+    private TextField addMember() {
+        TextField textField = new TextField();
+        textField.setPromptText("Add member...");
+        textField.relocate(10, 470);
+        textField.setOnAction(actionEvent -> {
+            try {
+                client.sendAddMemberRequest(textField.getText());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return textField;
     }
 
     private void setMessageEvent(TextField message, Thread thread, boolean isGroup) {
