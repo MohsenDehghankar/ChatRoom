@@ -9,8 +9,8 @@ import java.net.*;
 public class Server {
 
     private static ArrayList<ClientHandler> clients = new ArrayList<>();
-    private static ArrayList<Group> groups = new ArrayList<>();
-    private static int i = 1;
+    private static ArrayList<ServerGroup> groups = new ArrayList<>();
+
 
     public static void main(String[] args) throws IOException {
         ServerSocket ss = new ServerSocket(1234);
@@ -28,7 +28,6 @@ public class Server {
             System.out.println("Adding this client to active client list");
             clients.add(newHandler);
             t.start();
-            i++;
         }
     }
 
@@ -48,17 +47,17 @@ public class Server {
         return clients;
     }
 
-    public static void addGroup(Group group) {
+    public static void addGroup(ServerGroup group) {
         groups.add(group);
     }
 
-    public static ArrayList<Group> getGroups() {
+    public static ArrayList<ServerGroup> getGroups() {
         return groups;
     }
 
 
-    public static Group getGroupByName(String name) {
-        for (Group group : groups) {
+    public static ServerGroup findGroupByName(String name) {
+        for (ServerGroup group : groups) {
             if (group.getName().equals(name))
                 return group;
         }

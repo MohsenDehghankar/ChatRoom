@@ -1,7 +1,9 @@
 package sample;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -11,6 +13,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.io.*;
@@ -71,20 +74,20 @@ public class Controller {
 
     private void handleConnectionState(boolean status, Label statusLabel) {
         if (status) {
-            showActionChooseMenu();
+            showFirstMenu();
         } else {
             statusLabel.setText("Not Connected :(");
         }
     }
 
-    private void showActionChooseMenu() {
+    /*private void showActionChooseMenu() {
         javafx.scene.Group root = new javafx.scene.Group();
         Scene scene = new Scene(root, 300, 300);
         Button chat = new Button("Chat");
         chat.setOnMouseClicked(mouseEvent -> {
-            showClientsList();
+            showFirstMenu();
         });
-        Button group = new Button("Group");
+        Button group = new Button("ServerGroup");
         group.setOnMouseClicked(mouseEvent -> {
             showGroupMenu();
         });
@@ -101,16 +104,16 @@ public class Controller {
         chat.relocate(70, 50);
         group.relocate(70, 150);
         addToStage(stage, scene, root, chat, group, exit);
-    }
+    }*/
 
-    private void showGroupMenu() {
+    /*private void showGroupMenu() {
         javafx.scene.Group root = new javafx.scene.Group();
         Scene scene = new Scene(root, 400, 400);
-        Button create = new Button("Create Group");
+        Button create = new Button("Create ServerGroup");
         create.relocate(10, 10);
         ListView<String> groups = new ListView<>();
         groups.relocate(150, 10);
-        Thread thread = getClientListRefreshingThread(groups, true);
+        Thread thread = new ListRefreshThread(groups, client, true);
         thread.setDaemon(true);
         thread.start();
         TextField groupName = new TextField("enter name for group...");
@@ -121,7 +124,7 @@ public class Controller {
         groups.setOnMouseClicked(mouseEvent -> {
             String selectedItem = groups.getSelectionModel().getSelectedItem();
             thread.interrupt();
-            client.startGroup(CODE,selectedItem,"");
+            client.startGroup(CODE, selectedItem, "");
             showChatScene(selectedItem, true);
         });
         create.setOnMouseClicked(mouseEvent -> {
@@ -138,75 +141,119 @@ public class Controller {
             }
         }));
         addToStage(stage, scene, root, groupName, members, create, groups);
-    }
+    }*/
 
-    private void showClientsList() {
+    private void showFirstMenu() {
         String name = client.getName();
-        javafx.scene.Group root = new javafx.scene.Group();
+        Group root = new Group();
         Scene scene = new Scene(root, 400, 400);
         Label label = new Label("Active Clients : ");
-        label.relocate(10, 15);
+        label.relocate(10, 10);
+        Label groupsLabel = new Label("Your Groups :");
+        groupsLabel.relocate(120, 10);
+        Label userName = new Label("Your Name : " + name);
+        userName.relocate(250, 10);
+        ListView<String> groupsList = new ListView<>();
+        groupsList.relocate(120, 30);
+        groupsList.setPrefSize(100, 200);
         ListView<String> listView = new ListView<>();
         listView.relocate(10, 30);
-        listView.setPrefSize(200, 200);
-        Thread listRefreshThread = getClientListRefreshingThread(listView, false);
+        listView.setPrefSize(100, 200);
+        Thread listRefreshThread = new ListRefreshThread(new ListView[]{listView, groupsList}, client, false);
         listRefreshThread.setDaemon(true);
         listRefreshThread.start();
-        listView.addEventFilter(KeyEvent.KEY_PRESSED, (key) -> {
-            if (key.getCode() == KeyCode.ESCAPE) {
-                listRefreshThread.interrupt();
-                showActionChooseMenu();
+        setListViewEvent(listView, listRefreshThread);
+        setGroupsListEvent(groupsList, listRefreshThread);
+        try {
+            fillTheClientsList(new ListView[]{listView, groupsList}, client.requestGroupAndClientList(CODE), client);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Node[] nodes = getCreateGroupNodes();
+        addToStage(stage, scene, root, listView, userName, label,
+                groupsLabel, groupsList, nodes[0], nodes[1], nodes[2]);
+    }
+
+    private void setGroupsListEvent(ListView<String> groupsList, Thread thread) {
+        groupsList.setOnMouseClicked(mouseEvent -> {
+            String groupName = groupsList.getSelectionModel().getSelectedItem();
+            try {
+                if (groupName != null) {
+                    boolean b = client.enterAGroup(groupName);
+                    if (b) {
+                        thread.interrupt();
+                        showChatScene(groupName, true);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         });
+    }
+
+    private Node[] getCreateGroupNodes() {
+        Button button = new Button("Create Group");
+        button.relocate(260, 80);
+        TextField textField = new TextField();
+        textField.setPromptText("members");
+        TextField groupName = new TextField();
+        groupName.setPromptText("group name");
+        groupName.relocate(240, 100);
+        textField.relocate(240, 40);
+        button.setOnAction(mouseEvent -> {
+            try {
+                client.createGroup(groupName.getText(), textField.getText());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return new Node[]{textField, groupName, button};
+    }
+
+    private void setListViewEvent(ListView<String> listView, Thread thread) {
         listView.setOnMouseClicked(mouseEvent -> {
             String contact = listView.getSelectionModel().getSelectedItem();
             if (contact != null) {
-                listRefreshThread.interrupt();
+                thread.interrupt();
                 client.startChat(CODE, contact);
                 showChatScene(contact, false);
             }
         });
-        Label userName = new Label("Your Name : " + name);
-        userName.relocate(200, 10);
-        try {
-            fillTheClientsList(listView, client.requestClientsList(CODE));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        addToStage(stage, scene, root, listView, userName, label);
-    }
-
-    private Thread getClientListRefreshingThread(ListView<String> listView, boolean isGroup) {
-        Thread thread = new Thread(() -> {
-            while (!Thread.interrupted()) {
+        listView.addEventFilter(KeyEvent.KEY_PRESSED, (key) -> {
+            if (key.getCode() == KeyCode.ESCAPE) {
                 try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    break;
+                    client.getDataOutputStream().writeUTF(CODE + "exit");
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                Platform.runLater(() -> {
-                    try {
-                        if (!isGroup)
-                            fillTheClientsList(listView, client.requestClientsList(CODE));
-                        else
-                            fillTheClientsList(listView, client.requestGroupList(CODE));
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
+                thread.interrupt();
+                showMainMenu();
             }
         });
-        return thread;
     }
 
-    private void fillTheClientsList(ListView<String> listView, ArrayList<String> clients) {
-        if (clients != null) {
-            listView.getItems().clear();
-            for (String client : clients) {
-                if (!client.equals(this.client.getName()) && !listView.getItems().contains(client))
-                    listView.getItems().add(client);
+
+    public static void fillTheClientsList(ListView[] listView, ArrayList<String> clientsAndGroups, Client currentClient) {
+        if (clientsAndGroups != null) {
+            listView[0].getItems().clear();
+            listView[1].getItems().clear();
+            int i = 0;
+            for (String clientsAndGroup : clientsAndGroups) {
+                if (i == 0) {
+                    if (clientsAndGroup.equals("change"))
+                        i = 1;
+                    else if (!currentClient.getName().equals(clientsAndGroup)
+                            && !listView[0].getItems().contains(currentClient))
+                        listView[0].getItems().add(clientsAndGroup);
+                } else {
+                    listView[1].getItems().add(clientsAndGroup);
+                }
             }
+            /*listView.getItems().clear();
+            for (String client : clients) {
+                if (!client.equals(currentClient.getName()) && !listView.getItems().contains(client))
+                    listView.getItems().add(client);
+            }*/
         }
     }
 
@@ -222,11 +269,11 @@ public class Controller {
         contactNameLabel.relocate(5, 10);
         ListView[] messageHistories = getChatHistoryLists(replyTo);
         TextField message = getMessageBox(messageHistories, replyTo, isGroup, contactName);
-        Thread thread = getChatRefreshingThread(messageHistories, isGroup, contactName);
+        Thread thread = new ChatRefreshThread(client, isGroup, messageHistories, contactName);
         thread.setDaemon(true);
         thread.start();
         setMessageEvent(message, thread, isGroup);
-        Button emojiButton = getEmojis(10, 440, messageHistories);
+        Button emojiButton = getEmojis(10, 440, messageHistories, isGroup, contactName);
         addToStage(stage, scene, root, message, userName, contactNameLabel,
                 messageHistories[0], messageHistories[1], replyTo, emojiButton);
     }
@@ -238,18 +285,15 @@ public class Controller {
                 try {
                     client.sendExitToServer(CODE);
                 } catch (IOException e) {
+                    System.out.println("salam");
                     e.printStackTrace();
                 }
-                if (!isGroup) {
-                    showClientsList();
-                } else {
-                    showActionChooseMenu();
-                }
+                showFirstMenu();
             }
         }));
     }
 
-    private Button getEmojis(int x, int y, ListView[] list) {
+    private Button getEmojis(int x, int y, ListView[] list, boolean isGroup, String groupName) {
         Stage stage = new Stage();
         javafx.scene.Group root = new javafx.scene.Group();
         Scene scene = new Scene(root, 300, 300);
@@ -266,9 +310,17 @@ public class Controller {
             int index = listView.getItems().indexOf(imageView);
             index++; // number of emoji
             try {
-                ImageView imageView1 = client.getCurrentChat().sendEmoji(index, CODE, false);
-                list[1].getItems().add(imageView1);
-                list[0].getItems().add(client.getCurrentChat().sendEmoji(1, CODE, true));
+                if (!isGroup) {
+                    ImageView imageView1 = client.getCurrentChat().sendEmoji(index, CODE, false, false);
+                    list[1].getItems().add(imageView1);
+                    list[0].getItems().add(client.getCurrentChat().sendEmoji(1, CODE, true, false));
+                } else {
+                    ImageView imageView1 = new ClientChat(client, groupName)
+                            .sendEmoji(index, CODE, false, true);
+                    list[1].getItems().add(imageView1);
+                    list[0].getItems().add(new ClientChat(client, groupName)
+                            .sendEmoji(1, CODE, true, true));
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -310,61 +362,6 @@ public class Controller {
         return lists;
     }
 
-    private Thread getChatRefreshingThread(ListView[] lists, boolean isGroup, String group) {
-        Thread thread = new Thread(() -> {
-            while (!Thread.interrupted()) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    break;
-                }
-                Platform.runLater(() -> {
-                    try {
-                        if (!isGroup && client.getDataInputStream().available() > 0) {
-                            String received = client.getDataInputStream().readUTF();
-                            if (received.length() >= 10 &&
-                                    received.substring(0, 10).equals(CODE + "emoji.")) {
-                                ImageView view = client.getCurrentChat().receiveEmoji(received, false);
-                                if (view != null) {
-                                    lists[0].getItems().add(view);
-                                    lists[1].getItems().add(client.getCurrentChat().receiveEmoji("", true));
-                                }
-                            } else if (received.length() < 4
-                                    || (!received.substring(0, 4).equals("5780"))) {
-                                String message = client.getCurrentChat().receiveMessage(received);
-                                if (message != null) {
-                                    lists[0].getItems().add(message);
-                                    lists[1].getItems().add(" ");
-                                }
-                            }
-                        } else if (isGroup) {
-                            fillGroupMessages(client.requestGroupMessages(CODE), lists[0]);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-            }
-        });
-        return thread;
-    }
-
-    private void fillGroupMessages(ArrayList<String> messages, ListView listView) {
-        if (messages != null) {
-            listView.getItems().clear();
-            for (String message : messages) {
-                String[] split = message.split("\\.");
-                if (split.length == 3) {
-                    listView.getItems().add(split[2] + " sent :");
-                    listView.getItems().add(new ImageView(ClientChat.getCopyOfEmoji("images/" + split[1]
-                            + ".jpg")));
-                } else if (split.length == 2) {
-                    listView.getItems().add(split[0] + "( " + split[1] + " said )");
-                }
-            }
-        }
-    }
-
     private TextField getMessageBox(ListView<String>[] lists, Label replyTo, boolean isGroup, String groupName) {
         TextField message = new TextField("");
         message.setPromptText("Type Message ...");
@@ -374,9 +371,11 @@ public class Controller {
             try {
                 String sent;
                 if (isGroup) {
-                    sent = new ClientChat(client, groupName).sendMessage(replyTo.getText(), message.getText());
+                    sent = new ClientChat(client, groupName)
+                            .sendMessage(replyTo.getText(), message.getText(), true);
                 } else
-                    sent = client.getCurrentChat().sendMessage(replyTo.getText(), message.getText());
+                    sent = client.getCurrentChat()
+                            .sendMessage(replyTo.getText(), message.getText(), false);
                 lists[1].getItems().add(sent);
                 lists[0].getItems().add(" ");
                 message.setText("");

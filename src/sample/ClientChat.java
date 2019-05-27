@@ -18,7 +18,7 @@ public class ClientChat {
     }
 
 
-    public String sendMessage(String replyTo, String message) throws IOException {
+    public String sendMessage(String replyTo, String message, boolean isGroup) throws IOException {
         String relation = " -> ";
         if (replyTo.equals("Reply To : No Message") || replyTo.equals("Reply To :  ")) {
             replyTo = "";
@@ -26,7 +26,10 @@ public class ClientChat {
         }
         //message.contactName.sender
         String toSend;
-        toSend = replyTo + relation + message + "." + contactName + "." + currentClient.getName();
+        if (!isGroup)
+            toSend = replyTo + relation + message + "." + contactName + "." + currentClient.getName();
+        else
+            toSend = replyTo + relation + message + " ( " + currentClient.getName() + " sent )" + "." + currentClient.getName();
         currentClient.getDataOutputStream().writeUTF(toSend);
         return toSend.substring(0, toSend.indexOf('.'));
     }
@@ -75,11 +78,15 @@ public class ClientChat {
         return writableImage;
     }
 
-    public ImageView sendEmoji(int index, String CODE, boolean empty) throws IOException {
+    public ImageView sendEmoji(int index, String CODE, boolean empty, boolean isGroup) throws IOException {
         if (empty) {
             return new ImageView(getCopyOfEmoji("images/5780.jpg"));
         }
-        String toSend = CODE + "emoji." + index + "." + contactName + "." + currentClient.getName();
+        String toSend;
+        if (!isGroup)
+            toSend = CODE + "emoji." + index + "." + contactName + "." + currentClient.getName();
+        else
+            toSend = CODE + "emoji." + index + "." + currentClient.getName();
         // 5780emoji.numberOfEmoji.contactName.sender
         currentClient.getDataOutputStream().writeUTF(toSend);
         return new ImageView(getCopyOfEmoji("images/" + index + ".jpg"));

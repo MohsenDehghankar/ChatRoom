@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ClientHandler implements Runnable {
 
@@ -13,10 +14,7 @@ public class ClientHandler implements Runnable {
     private final DataOutputStream dataOutputStream;
     private Socket s;
     private boolean isLoggedIn;
-
-    public static String getCODE() {
-        return CODE;
-    }
+    // private ArrayList<String> groupsNames = new ArrayList<>();
 
     public ClientHandler(Socket s, String name,
                          DataInputStream dis, DataOutputStream dos) {
@@ -29,22 +27,14 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
-        sendClientsArrayList();
+        sendClientsAndGroupArrayList();
         String received;
         mainLoop:
         while (true) {
             try {
                 received = dataInputStream.readUTF();
-
-                if (received.equals(CODE + "clients")) {
-                    sendClientsArrayList();
-                } else if (received.equals(CODE + "groups")) {
-                    String send = CODE + "groups ";
-                    for (Group group : Server.getGroups()) {
-                        send += group.getName() + " ";
-                    }
-                    send = send.substring(0, send.length() - 1);
-                    dataOutputStream.writeUTF(send);
+                if (received.equals(CODE + "list")) {
+                    sendClientsAndGroupArrayList();
                 } else if (received.equals(CODE + "exit")) {
                     isLoggedIn = false;
                     Server.checkOnlineClients();
@@ -52,23 +42,14 @@ public class ClientHandler implements Runnable {
                 } else if (received.equals(CODE + "chat")) {
                     Chat chat = new Chat(dataInputStream, dataOutputStream, clientName);
                     chat.startChat();
-                } else if (received.equals(CODE + "group")) {
-                    String clients = dataInputStream.readUTF();
-                    Group group1 = Server.getGroupByName(clients.substring(clients.indexOf('.') + 1));
-                    if (group1 == null) {
-                        Group group = new Group(clients.substring(0, clients.lastIndexOf('.'))
-                                , clients.substring(clients.indexOf('.') + 1), dataOutputStream, dataInputStream);
-                        Server.addGroup(group);
-                        group.startGroup();
-                    } else {
-                        group1.startGroup();
-                    }
+                } else if (received.contains(".") && received.split("\\.")[0].equals(CODE + "group")) {
+                    //CODEgroup.clientName.groupName(.members)
+                    handleGroup(received);
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();
                 break;
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
 
         }
@@ -80,28 +61,54 @@ public class ClientHandler implements Runnable {
         }
     }
 
+    private void handleGroup(String received) throws IOException {
+        String[] split = received.split("\\.");
+        if (split.length == 3) {
+            //entering a group
+            String groupName = split[2];
+            String clientName = split[1];
+            ServerGroup serverGroup = Server.findGroupByName(groupName);
+            if (serverGroup != null && serverGroup.isMember(clientName)) {
+                new GroupChat(serverGroup, clientName, dataOutputStream, dataInputStream).startChat();
+            } else {
+                //not entered
+                dataOutputStream.writeUTF("5780error");
+            }
+        } else if (split.length == 4) {
+            //creating a group
+            String admin = split[1];
+            String groupName = split[2];
+            String members = split[3];
+            ServerGroup serverGroup = new ServerGroup(members, groupName, admin);
+            Server.addGroup(serverGroup);
+            //group made , now enter
+        }
+    }
+
     public String getClientName() {
         return clientName;
     }
 
-    private void sendClientsArrayList() {
-        String clients = CODE;
+    private void sendClientsAndGroupArrayList() {
+        String clients = CODE + "list";
+        String send2 = " change";
+        for (ServerGroup group : Server.getGroups()) {
+            if (group.isMember(clientName))
+                send2 += " " + group.getName();
+        }
         for (int i = 0; i < Server.getClients().size(); i++) {
             if (i != 0)
-                clients += "." + Server.getClients().get(i).getClientName();
+                clients += " " + Server.getClients().get(i).getClientName();
             else
                 clients += Server.getClients().get(i).getClientName();
         }
         try {
-            dataOutputStream.writeUTF(clients);
+            dataOutputStream.writeUTF(clients + send2);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public DataInputStream getDataInputStream() {
-        return dataInputStream;
-    }
 
     public DataOutputStream getDataOutputStream() {
         return dataOutputStream;
@@ -110,6 +117,10 @@ public class ClientHandler implements Runnable {
     public boolean getLoggedInStatus() {
         return isLoggedIn;
     }
+
+    /*public void addGroup(String groupName) {
+        groupsNames.add(groupName);
+    }*/
 }
 
 
