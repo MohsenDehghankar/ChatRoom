@@ -3,9 +3,7 @@ package sample;
 import javafx.application.Application;
 import javafx.stage.Stage;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -112,6 +110,17 @@ public class Client extends Application {
 
     public void sendAddMemberRequest(String member) throws IOException {
         dataOutputStream.writeUTF("5780addmember." + name + "." + member);
+    }
+
+    public void sendImage(File file, String contact) throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(file);
+        dataOutputStream.writeUTF("5780image" + contact + "." + file.length());
+        byte[] bytes = new byte[70000];
+        int count;
+        while ((count = fileInputStream.read(bytes)) > 0) {
+            dataOutputStream.write(bytes, 0, count);
+        }
+        fileInputStream.close();
     }
 
 }

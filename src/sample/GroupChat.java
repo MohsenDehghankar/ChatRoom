@@ -1,8 +1,6 @@
 package sample;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 
 public class GroupChat {
@@ -30,10 +28,40 @@ public class GroupChat {
                 break;
             } else if (received.contains(".") && received.split("\\.")[0].equals(CODE + "addmember")) {
                 addMember(received);
-            } else if (received.contains(".") && received.split("\\.").length == 2) {
-                sendMessage(received);
+            } else if (received.length() >= 9 && received.substring(0, 9).equals("5780image")) {
+                String group = received.substring(9, received.lastIndexOf("."));
+                long length = Integer.parseInt(received.substring(received.lastIndexOf('.') + 1));
+                FileOutputStream f = new FileOutputStream("src/images/serverTemp/1.jpg");
+                int count;
+                byte[] buffer = new byte[70000]; // or 4096, or more
+                while ((count = dataInputStream.read(buffer)) > 0) {
+                    f.write(buffer, 0, count);
+                    if (count == length)
+                        break;
+                }
+                f.close();
+                main:
+                for (ServerGroup serverGroup : Server.getGroups()) {
+                    if (serverGroup.getName().equals(groupName)) {
+                        for (ClientHandler client : serverGroup.getMembers()) {
+                            if (!client.getClientName().equals(currentClient)) {
+                                FileInputStream fileInputStream = new FileInputStream("src/images/serverTemp/1.jpg");
+                                client.getDataOutputStream().writeUTF("5780image" + groupName + "." + length);
+                                byte[] bytes = new byte[70000];
+                                int count2;
+                                while ((count2 = fileInputStream.read(bytes)) > 0) {
+                                    client.getDataOutputStream().write(bytes, 0, count);
+                                }
+                                fileInputStream.close();
+                                break main;
+                            }
+                        }
+                    }
+                }
             } else if (received.contains(".") && received.split("\\.")[0].equals("5780emoji")) {
                 sendEmoji(received);
+            } else if (received.contains(".") && received.split("\\.").length == 2) {
+                sendMessage(received);
             }
         }
     }

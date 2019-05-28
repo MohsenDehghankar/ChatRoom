@@ -121,6 +121,10 @@ public class ClientHandler implements Runnable {
     /*public void addGroup(String groupName) {
         groupsNames.add(groupName);
     }*/
+
+    public DataInputStream getDataInputStream() {
+        return dataInputStream;
+    }
 }
 
 

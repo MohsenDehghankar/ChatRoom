@@ -14,6 +14,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.*;
@@ -130,12 +131,12 @@ public class Controller {
 
     private Node[] getCreateGroupNodes() {
         Button button = new Button("Create Group");
-        button.relocate(260, 80);
+        button.relocate(260, 150);
         TextField textField = new TextField();
         textField.setPromptText("members");
         TextField groupName = new TextField();
         groupName.setPromptText("group name");
-        groupName.relocate(240, 100);
+        groupName.relocate(240, 90);
         textField.relocate(240, 40);
         button.setOnAction(mouseEvent -> {
             try {
@@ -209,7 +210,29 @@ public class Controller {
         if (isGroup)
             root.getChildren().add(addMember());
         addToStage(stage, scene, root, message, userName, contactNameLabel,
-                messageHistories[0], messageHistories[1], replyTo, emojiButton);
+                messageHistories[0], messageHistories[1], replyTo, emojiButton
+                , getImageSendingNodes(contactName,messageHistories)[0]);
+    }
+
+    private Node[] getImageSendingNodes(String contact , ListView[] listViews) {
+        Button image = new Button("Send Image");
+        image.relocate(250, 470);
+        FileChooser fileChooser = new FileChooser();
+        FileChooser.ExtensionFilter extFilter =
+                new FileChooser.ExtensionFilter("IMAGE files (*.jpg)", "*.jpg");
+        fileChooser.getExtensionFilters().add(extFilter);
+        image.setOnAction(actionEvent -> {
+            File selected = fileChooser.showOpenDialog(stage);
+            try {
+                client.sendImage(selected,contact);
+                listViews[1].getItems().add(new ImageView(
+                        new Image(selected.toURI().toURL().toExternalForm())));
+                listViews[0].getItems().add("\n\n\n\n\n\n\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        return new Node[]{image};
     }
 
     private TextField addMember() {
