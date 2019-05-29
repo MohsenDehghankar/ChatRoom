@@ -1,13 +1,10 @@
 package sample;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ServerGroup {
-    private static final String CODE = "5780";
     private ArrayList<ClientHandler> members = new ArrayList<>();
     private String groupName;
-    private ArrayList<String> messages = new ArrayList<>();
     private String admin;
 
     public ServerGroup(String memberString, String groupName, String admin) {

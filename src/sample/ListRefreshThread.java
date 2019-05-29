@@ -28,11 +28,6 @@ public class ListRefreshThread extends Thread {
             }
             Platform.runLater(() -> {
                 try {
-                    /*if (!isGroup)
-                        Controller.fillTheClientsList(listView, client.requestClientsList(CODE),client);
-                    else
-                        Controller.fillTheClientsList(listView, client.requestGroupList(CODE),client);
-*/
                     Controller.fillTheClientsList(listView, client.requestGroupAndClientList(CODE), client);
                 } catch (IOException e) {
                     e.printStackTrace();

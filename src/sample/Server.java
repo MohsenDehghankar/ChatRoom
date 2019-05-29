@@ -27,6 +27,7 @@ public class Server {
             Thread t = new Thread(newHandler);
             System.out.println("Adding this client to active client list");
             clients.add(newHandler);
+            System.out.println("Added");
             t.start();
         }
     }

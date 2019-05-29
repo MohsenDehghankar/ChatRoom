@@ -3,8 +3,6 @@ package sample;
 import javafx.scene.image.*;
 import javafx.scene.paint.Color;
 
-
-import java.awt.image.BufferedImage;
 import java.io.*;
 
 
@@ -24,7 +22,6 @@ public class ClientChat {
             replyTo = "";
             relation = "";
         }
-        //message.contactName.sender
         String toSend;
         if (!isGroup)
             toSend = replyTo + relation + message + "." + contactName + "." + currentClient.getName();
@@ -40,16 +37,6 @@ public class ClientChat {
         String messageSent = message.substring(0, message.lastIndexOf('.'));
         if (contactSent.equals(contactName)) {
             return messageSent;
-        } else
-            return null;
-    }
-
-    public Image receiveImage(String contactName, byte[] bytes) throws IOException {
-        if (this.contactName.equals(contactName)) {
-            File file = new File("src/images/new.jpg");
-            FileOutputStream outputStream = new FileOutputStream(file);
-            outputStream.write(bytes);
-            return new Image("src/images/new.jpg");
         } else
             return null;
     }
@@ -97,12 +84,9 @@ public class ClientChat {
             toSend = CODE + "emoji." + index + "." + contactName + "." + currentClient.getName();
         else
             toSend = CODE + "emoji." + index + "." + currentClient.getName();
-        // 5780emoji.numberOfEmoji.contactName.sender
         currentClient.getDataOutputStream().writeUTF(toSend);
         return new ImageView(getCopyOfEmoji("images/" + index + ".jpg"));
     }
 
-    public String getContactName() {
-        return contactName;
-    }
+
 }

@@ -1,8 +1,5 @@
 package sample;
 
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -11,9 +8,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -206,15 +201,15 @@ public class Controller {
         thread.setDaemon(true);
         thread.start();
         setMessageEvent(message, thread, isGroup);
-        Button emojiButton = getEmojis(10, 440, messageHistories, isGroup, contactName);
+        Button emojiButton = getEmojiButton(10, 440, messageHistories, isGroup, contactName);
         if (isGroup)
             root.getChildren().add(addMember());
         addToStage(stage, scene, root, message, userName, contactNameLabel,
                 messageHistories[0], messageHistories[1], replyTo, emojiButton
-                , getImageSendingNodes(contactName,messageHistories)[0]);
+                , getImageSendingNodes(contactName, messageHistories)[0]);
     }
 
-    private Node[] getImageSendingNodes(String contact , ListView[] listViews) {
+    private Node[] getImageSendingNodes(String contact, ListView[] listViews) {
         Button image = new Button("Send Image");
         image.relocate(250, 470);
         FileChooser fileChooser = new FileChooser();
@@ -224,7 +219,7 @@ public class Controller {
         image.setOnAction(actionEvent -> {
             File selected = fileChooser.showOpenDialog(stage);
             try {
-                client.sendImage(selected,contact);
+                client.sendImage(selected, contact);
                 listViews[1].getItems().add(new ImageView(
                         new Image(selected.toURI().toURL().toExternalForm())));
                 listViews[0].getItems().add("\n\n\n\n\n\n\n");
@@ -256,7 +251,6 @@ public class Controller {
                 try {
                     client.sendExitToServer(CODE);
                 } catch (IOException e) {
-                    System.out.println("salam");
                     e.printStackTrace();
                 }
                 showFirstMenu();
@@ -264,7 +258,7 @@ public class Controller {
         }));
     }
 
-    private Button getEmojis(int x, int y, ListView[] list, boolean isGroup, String groupName) {
+    private Button getEmojiButton(int x, int y, ListView[] list, boolean isGroup, String groupName) {
         Stage stage = new Stage();
         javafx.scene.Group root = new javafx.scene.Group();
         Scene scene = new Scene(root, 300, 300);
@@ -279,7 +273,7 @@ public class Controller {
         listView.setOnMouseClicked(mouseEvent -> {
             ImageView imageView = listView.getSelectionModel().getSelectedItem();
             int index = listView.getItems().indexOf(imageView);
-            index++; // number of emoji
+            index++;
             try {
                 if (!isGroup) {
                     ImageView imageView1 = client.getCurrentChat().sendEmoji(index, CODE, false, false);

@@ -14,7 +14,6 @@ public class ClientHandler implements Runnable {
     private final DataOutputStream dataOutputStream;
     private Socket s;
     private boolean isLoggedIn;
-    // private ArrayList<String> groupsNames = new ArrayList<>();
 
     public ClientHandler(Socket s, String name,
                          DataInputStream dis, DataOutputStream dos) {
@@ -29,7 +28,6 @@ public class ClientHandler implements Runnable {
     public void run() {
         sendClientsAndGroupArrayList();
         String received;
-        mainLoop:
         while (true) {
             try {
                 received = dataInputStream.readUTF();
@@ -43,9 +41,7 @@ public class ClientHandler implements Runnable {
                     Chat chat = new Chat(dataInputStream, dataOutputStream, clientName);
                     chat.startChat();
                 } else if (received.contains(".") && received.split("\\.")[0].equals(CODE + "group")) {
-                    //CODEgroup.clientName.groupName(.members)
                     handleGroup(received);
-
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -64,24 +60,20 @@ public class ClientHandler implements Runnable {
     private void handleGroup(String received) throws IOException {
         String[] split = received.split("\\.");
         if (split.length == 3) {
-            //entering a group
             String groupName = split[2];
             String clientName = split[1];
             ServerGroup serverGroup = Server.findGroupByName(groupName);
             if (serverGroup != null && serverGroup.isMember(clientName)) {
                 new GroupChat(serverGroup, clientName, dataOutputStream, dataInputStream).startChat();
             } else {
-                //not entered
                 dataOutputStream.writeUTF("5780error");
             }
         } else if (split.length == 4) {
-            //creating a group
             String admin = split[1];
             String groupName = split[2];
             String members = split[3];
             ServerGroup serverGroup = new ServerGroup(members, groupName, admin);
             Server.addGroup(serverGroup);
-            //group made , now enter
         }
     }
 
@@ -118,13 +110,6 @@ public class ClientHandler implements Runnable {
         return isLoggedIn;
     }
 
-    /*public void addGroup(String groupName) {
-        groupsNames.add(groupName);
-    }*/
-
-    public DataInputStream getDataInputStream() {
-        return dataInputStream;
-    }
 }
 
 
